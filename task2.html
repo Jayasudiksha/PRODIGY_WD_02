@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stopwatch with Lap Time Tracking</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #6a11cb, #2575fc);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Dynamic gradient background */
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        body {
+            background: linear-gradient(135deg, #ff5f6d, #ffc371, #2575fc, #6a11cb);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+        }
+
+        /* Particle effect */
+        .particle {
+            position: absolute;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: float 6s infinite ease-in-out;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(0) rotate(0deg);
+            }
+            50% {
+                transform: translateY(-20px) rotate(180deg);
+            }
+            100% {
+                transform: translateY(0) rotate(360deg);
+            }
+        }
+
+        /* Animating particles on the background */
+        .particle:nth-child(1) {
+            width: 50px;
+            height: 50px;
+            bottom: 10%;
+            left: 20%;
+            animation-duration: 7s;
+        }
+
+        .particle:nth-child(2) {
+            width: 30px;
+            height: 30px;
+            top: 20%;
+            right: 25%;
+            animation-duration: 5s;
+        }
+
+        .particle:nth-child(3) {
+            width: 60px;
+            height: 60px;
+            top: 30%;
+            left: 50%;
+            animation-duration: 9s;
+        }
+
+        .particle:nth-child(4) {
+            width: 40px;
+            height: 40px;
+            top: 70%;
+            left: 10%;
+            animation-duration: 8s;
+        }
+
+        .particle:nth-child(5) {
+            width: 20px;
+            height: 20px;
+            top: 15%;
+            left: 85%;
+            animation-duration: 6s;
+        }
+
+        .stopwatch {
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            width: 350px;
+            z-index: 2;
+            position: relative;
+        }
+
+        .time {
+            font-size: 3em;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .buttons {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .btn {
+            background-color: #2575fc;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            font-size: 1em;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin: 5px;
+        }
+
+        .btn:hover {
+            background-color: #6a11cb;
+        }
+
+        .lap-times {
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        .lap-times li {
+            background-color: #f1f1f1;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            color: #333;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Particle elements for background effect -->
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+
+    <div class="stopwatch">
+        <div class="time" id="time">00:00:00</div>
+        <div class="buttons">
+            <button class="btn" id="start">Start</button>
+            <button class="btn" id="lap">Lap</button>
+            <button class="btn" id="reset">Reset</button>
+        </div>
+        <ul class="lap-times" id="laps"></ul>
+    </div>
+
+    <script>
+        let timeDisplay = document.getElementById('time');
+        let startButton = document.getElementById('start');
+        let lapButton = document.getElementById('lap');
+        let resetButton = document.getElementById('reset');
+        let lapsContainer = document.getElementById('laps');
+
+        let timer;
+        let elapsedTime = 0;
+        let lapStartTime = 0;
+        let isRunning = false;
+        let lapCount = 0;
+
+        // Function to format time
+        function formatTime(ms) {
+            let totalSeconds = Math.floor(ms / 1000);
+            let hours = Math.floor(totalSeconds / 3600);
+            let minutes = Math.floor((totalSeconds % 3600) / 60);
+            let seconds = totalSeconds % 60;
+
+            return (
+                String(hours).padStart(2, '0') + ':' +
+                String(minutes).padStart(2, '0') + ':' +
+                String(seconds).padStart(2, '0')
+            );
+        }
+
+        // Update display every 100ms
+        function updateDisplay() {
+            timeDisplay.textContent = formatTime(elapsedTime);
+        }
+
+        // Start and Stop the stopwatch
+        startButton.addEventListener('click', function () {
+            if (isRunning) {
+                clearInterval(timer);
+                startButton.textContent = 'Start';
+            } else {
+                const startTime = Date.now() - elapsedTime;
+                timer = setInterval(function () {
+                    elapsedTime = Date.now() - startTime;
+                    updateDisplay();
+                }, 100);
+                startButton.textContent = 'Pause';
+            }
+            isRunning = !isRunning;
+        });
+
+        // Record a lap and track interval between laps
+        lapButton.addEventListener('click', function () {
+            if (isRunning) {
+                lapCount++;
+                const lapTime = elapsedTime - lapStartTime;
+                const totalLapTime = elapsedTime;
+
+                const lapRecord = document.createElement('li');
+                lapRecord.innerHTML = `<strong>Lap ${lapCount}:</strong> Interval: ${formatTime(lapTime)} | Total: ${formatTime(totalLapTime)}`;
+                lapsContainer.appendChild(lapRecord);
+
+                lapStartTime = elapsedTime;  // Reset lap start time to current time
+            }
+        });
+
+        // Reset the stopwatch
+        resetButton.addEventListener('click', function () {
+            clearInterval(timer);
+            isRunning = false;
+            elapsedTime = 0;
+            lapStartTime = 0;
+            lapCount = 0;
+            updateDisplay();
+            lapsContainer.innerHTML = '';
+            startButton.textContent = 'Start';
+        });
+
+        // Initial display
+        updateDisplay();
+    </script>
+
+</body>
+</html>
